@@ -50,17 +50,14 @@ def send_at_command(ser, cmd):
 
         lines += [line_clean]
 
-        if 'ERROR' == line_clean:
+        if (
+            line_clean == 'ERROR'
+            or 'CME ERROR' in line_clean
+            or line_clean == 'OK'
+            or line_clean == 'NO CARRIER'
+            or line_clean == 'ABORTED'
+        ):
             break
-        elif 'CME ERROR' in line_clean:
-            break
-        elif 'OK' == line_clean:
-            break
-        elif 'NO CARRIER' == line_clean:
-            break
-        elif 'ABORTED' == line_clean:
-            break
-
     return lines
 
 def enter_at_prompt(device, ser):
@@ -78,7 +75,7 @@ def enter_at_prompt(device, ser):
 def at_connect(dev, baud):
     ser = create_serial(dev, 115200)
 
-    for i in range(3):
+    for _ in range(3):
         # See if anything is listening
         resp = send_at_command(ser, 'AT')
 

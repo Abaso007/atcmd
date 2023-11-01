@@ -61,12 +61,9 @@ def generate(cmd, pattern, idx):
 		gen = "7"
 	else:
 		gen = "error"
-		print("Error: unsupported pattern %s" % pattern)
+		print(f"Error: unsupported pattern {pattern}")
 
-	if gen == "error":
-		return cmd
-
-	return cmd[:idx]+gen+cmd[idx+len(pattern):]
+	return cmd if gen == "error" else cmd[:idx]+gen+cmd[idx+len(pattern):]
 
 
 def make(cmd):
@@ -83,10 +80,7 @@ def make(cmd):
 	if cmd.endswith("="):
 		cmd += "abc"
 
-	if cmd2 == "stop":
-		return cmd
-
-	return make(cmd)
+	return cmd if cmd2 == "stop" else make(cmd)
 
 
 def recv():
@@ -108,21 +102,21 @@ def recv():
 
 		# clean up the output for comparison
 		line_clean = line.strip('\r\n')
-	
+
 		lines += [line]
-	
+
 		# a terminal response. end NOW
-		if 'ERROR' == line_clean:
+		if line_clean == 'ERROR':
 			break
 		elif 'CME ERROR' in line_clean:
 			break
-		elif 'OK' == line_clean:
+		elif line_clean == 'OK':
 			break
-		elif 'NO CARRIER' == line_clean:
+		elif line_clean == 'NO CARRIER':
 			break
-		elif 'ABORTED' == line_clean:
+		elif line_clean == 'ABORTED':
 			break
-		elif 'NOT SUPPORTED' == line_clean:
+		elif line_clean == 'NOT SUPPORTED':
 			break
 		else:
 			continue
@@ -130,7 +124,7 @@ def recv():
 	# "Do you know how fast you were going?"
 	if time.time() - start_time < 1.0:
 		time.sleep(1)
-	
+
 	# post-processing
 	lines2 = []
 	for l in lines:
@@ -148,7 +142,7 @@ def send(cmd):
 	'''
 	cmd2 = make(cmd)
 	if debug_cmd_gen:
-		logging.info("[%s] -> [%s]" % (cmd, cmd2))
+		logging.info(f"[{cmd}] -> [{cmd2}]")
 	return (mfuzz_port.write(cmd2+'\r') != (len(cmd2)+1))
 
 
@@ -169,15 +163,15 @@ def fuzz(skip_reboot, skip_num=-1, from_file=""):
 	# Open the serial port
 	mfuzz_port = serial.Serial(acm_device, baud_rate, timeout=time_out)
 	if not mfuzz_port.isOpen():
-		logging.error("unable to open the port %s" % acm_device)
+		logging.error(f"unable to open the port {acm_device}")
 		return
-	logging.info("port is opened for %s" % acm_device)
+	logging.info(f"port is opened for {acm_device}")
 	logging.info("skip_num: %d, from_file %s" % (skip_num, from_file))
 
 	# Fuzz
 	counter = 0
 	if from_file != "":
-		logging.info("fuzzing: loading at cmds from %s" % from_file)
+		logging.info(f"fuzzing: loading at cmds from {from_file}")
 		logging.info("----------------------------------")
 		at_file = open(from_file, "r")
 		at_lines = at_file.readlines()
@@ -212,7 +206,7 @@ def fuzz(skip_reboot, skip_num=-1, from_file=""):
 		sys.exit(0)
 
 	for (sub, des) in at_cmds.fuzz_list:
-		logging.info("fuzzing: %s" % des)
+		logging.info(f"fuzzing: {des}")
 		logging.info("----------------------------------")
 		for c in sub:
 			counter += 1
